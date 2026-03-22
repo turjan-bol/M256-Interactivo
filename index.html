@@ -15,7 +15,7 @@
             --bg-main: #f8fafc;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
@@ -152,6 +152,7 @@
             display: flex;
             flex-direction: column;
             min-width: 0;
+            transition: var(--transition);
         }
 
         .top-bar {
@@ -208,6 +209,16 @@
             padding: 1rem;
             overflow: hidden;
             background: #f1f5f9;
+            transition: var(--transition);
+        }
+
+        @media (max-width: 768px) {
+            /* Cuando el panel está abierto en móvil, empuja el mapa hacia arriba */
+            .main.panel-open .canvas-container {
+                align-items: flex-start;
+                padding-top: 1rem;
+                transform: translateY(-10%) scale(0.9);
+            }
         }
 
         .viewer-card {
@@ -257,7 +268,7 @@
             padding: 1.5rem;
             z-index: 1100;
             border-top: 5px solid var(--verde-eco);
-            transform: translateY(120%);
+            transform: translateY(140%); /* Más escondido */
             transition: var(--transition);
         }
 
@@ -283,7 +294,7 @@
 
         .detail-panel ul {
             list-style: none;
-            max-height: 30vh;
+            max-height: 25vh; /* Un poco más pequeño para dejar ver el mapa */
             overflow-y: auto;
         }
 
@@ -306,7 +317,7 @@
         }
 
         @media (max-width: 576px) {
-            .footer { flex-direction: column; text-align: center; }
+            .footer { flex-direction: column; text-align: center; padding-bottom: 1.5rem; }
         }
 
         .btn-whatsapp {
@@ -352,6 +363,10 @@
             height: 28px;
             border-radius: 50%;
             cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -377,7 +392,7 @@
             <button class="nav-btn" id="btn-docente" onclick="selectPiso('docente')">Atención al Docente</button>
             <button class="nav-btn" id="btn-direccion" onclick="selectPiso('direccion')">Dirección de Carrera</button>
             
-            <h2>Niveles</h2>
+            <h2>Niveles Académicos</h2>
             <button class="nav-btn" id="btn-p1" onclick="selectPiso('p1')">Piso 1: Auditorio</button>
             <button class="nav-btn" id="btn-p2" onclick="selectPiso('p2')">Piso 2: CITEF</button>
             <button class="nav-btn" id="btn-p3" onclick="selectPiso('p3')">Piso 3: Aulas 10-14</button>
@@ -386,7 +401,7 @@
         </nav>
     </aside>
 
-    <main class="main">
+    <main class="main" id="mainContent">
         <header class="top-bar">
             <button class="menu-toggle" onclick="toggleSidebar()">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -398,7 +413,7 @@
         </header>
 
         <div class="info-alert">
-            Haz clic en el plano o usa el buscador para encontrar un aula.
+            Haz clic en el plano o usa el buscador para localizar un aula.
         </div>
 
         <div class="canvas-container">
@@ -439,8 +454,8 @@
             'p1': { title: "Piso 1: Auditorio y Cómputo", items: ["Auditorio 'Gustavo Prado'", "Sala de Cómputo", "Aulas 3 y 4", "Baños"] },
             'p2': { title: "Piso 2: CITEF", items: ["CITEF - Innovación Tecnológica"] },
             'p3': { title: "Piso 3: Aulas Académicas", items: ["Aula 10", "Aula 11", "Aula 12", "Aula 13", "Aula 14", "Baños"] },
-            'p4': { title: "Piso 4: Laboratorios", items: ["Aula 15", "Aula 16", "Aula 17", "Aula 18", "Aula 19", "Baños"] },
-            'p5': { title: "Piso 5: Postgrado", items: ["Aula 20", "Aula 21", "Aula 22", "Aula 23", "Aula 24", "Baños"] }
+            'p4': { title: "Piso 4: Aulas Académicas", items: ["Aula 15", "Aula 16", "Aula 17", "Aula 18", "Aula 19", "Baños"] },
+            'p5': { title: "Piso 5: Aulas Académicas", items: ["Aula 20", "Aula 21", "Aula 22", "Aula 23", "Aula 24", "Baños"] }
         };
 
         function toggleSidebar() {
@@ -453,8 +468,11 @@
             document.querySelectorAll('.piso-path').forEach(p => p.classList.remove('active'));
             
             const panel = document.getElementById('infoPanel');
+            const main = document.getElementById('mainContent');
+
             if (id === 0) {
                 panel.classList.remove('show');
+                main.classList.remove('panel-open');
                 document.getElementById('btn-exterior').classList.add('active');
                 return;
             }
@@ -467,7 +485,9 @@
             const data = infoData[id];
             document.getElementById('panelTitle').innerText = data.title;
             document.getElementById('panelList').innerHTML = data.items.map(i => `<li>${i}</li>`).join('');
+            
             panel.classList.add('show');
+            main.classList.add('panel-open');
 
             if(window.innerWidth < 992) {
                 document.getElementById('sidebar').classList.remove('active');
