@@ -1,269 +1,262 @@
-import React, { useState, useRef } from 'react';
-import { 
-  Building, 
-  BookOpen, 
-  Users, 
-  Monitor, 
-  Coffee, 
-  Microscope,
-  Info,
-  Upload,
-  Image as ImageIcon
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plano 3D Interactivo FCEAF</title>
+    
+    <!-- Importar Tailwind CSS desde CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Importar React y ReactDOM desde CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Importar Babel para que el navegador entienda el código JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-100 m-0 p-0">
+    
+    <!-- Contenedor principal donde React inyectará la aplicación -->
+    <div id="root"></div>
 
-// Definición de los pisos usando SVG Paths para adaptarse a los bordes exactos dibujados (líneas rojas).
-// Los puntos (M = Mover a, L = Línea a, Z = Cerrar forma) están en porcentajes relativos.
-const buildingData = [
-  { 
-    id: 'P5', 
-    label: 'P5', 
-    name: 'Piso 5', 
-    path: "M 12.5,13 L 87.5,13 L 89,22.5 L 11,22.5 Z",
-    infoTop: '17%',
-    icon: Building, 
-    areas: ['Decanato', 'Dirección de Carrera', 'Sala de Reuniones Administrativas'] 
-  },
-  { 
-    id: 'P4', 
-    label: 'P4', 
-    name: 'Piso 4', 
-    path: "M 11,23 L 89,23 L 90.5,33 L 9.5,33 Z",
-    infoTop: '30%',
-    icon: BookOpen, 
-    areas: ['Aulas de Posgrado (4A - 4E)', 'Auditorio Menor', 'Coordinación de Maestrías'] 
-  },
-  { 
-    id: 'P3', 
-    label: 'P3', 
-    name: 'Piso 3', 
-    path: "M 9.5,33.5 L 90.5,33.5 L 91.5,41 L 95.5,41 L 96.5,46 L 92.5,46 L 92.5,48.5 L 7.5,48.5 L 7.5,46 L 3.5,46 L 4.5,41 L 8.5,41 Z",
-    infoTop: '43%',
-    icon: Microscope, 
-    areas: ['Aulas de Posgrado (3A - 3E)', 'Laboratorio de Investigación Económica (3F)', 'Oficinas de Docentes Investigadores', 'Sala de Seminarios 301'] 
-  },
-  { 
-    id: 'P2', 
-    label: 'P2', 
-    name: 'Piso 2', 
-    path: "M 7.5,49 L 92.5,49 L 93.5,54.5 L 98,54.5 L 99,60 L 94.5,60 L 94.5,62.5 L 5.5,62.5 L 5.5,60 L 1,60 L 2,54.5 L 6.5,54.5 Z",
-    infoTop: '57%',
-    icon: Users, 
-    areas: ['Aulas de Pregrado (2A - 2F)', 'Biblioteca Especializada FCEAF', 'Salas de Estudio Grupal'] 
-  },
-  { 
-    id: 'P1', 
-    label: 'P1', 
-    name: 'Piso 1', 
-    path: "M 5.5,63 L 94.5,63 L 95.5,68 L 100,68 L 100,74.5 L 96,74.5 L 96,76.5 L 4,76.5 L 4,74.5 L 0,74.5 L 0,68 L 4.5,68 Z",
-    infoTop: '70%',
-    icon: Monitor, 
-    areas: ['Aulas de Pregrado (1A - 1F)', 'Centro de Cómputo e Informática', 'Soporte Técnico'] 
-  },
-  { 
-    id: 'PB', 
-    label: 'PB', 
-    name: 'Planta Baja', 
-    // La Planta Baja tiene dos formas separadas en el mismo trazo (M...Z y luego otro M...Z)
-    path: "M 7.5,77 L 40.5,77 L 40.5,88.5 L 7.5,88.5 Z M 40.5,77 L 85,77 L 85,88.5 L 40.5,88.5 Z",
-    infoTop: '85%',
-    icon: Coffee, 
-    areas: ['Recepción e Informaciones', 'Registro y Admisiones', 'Centro de Estudiantes', 'Cafetería Universitaria'] 
-  },
-];
+    <!-- Script de React -->
+    <script type="text/babel">
+        const { useState, useRef } = React;
 
-export default function InteractiveBuildingPlan() {
-  const [selectedFloor, setSelectedFloor] = useState(null);
-  const [hoveredFloor, setHoveredFloor] = useState(null);
-  
-  // Estado para manejar la imagen. Iniciamos intentando cargar tu imagen directamente desde GitHub (main).
-  const [imageUrl, setImageUrl] = useState("https://raw.githubusercontent.com/turjan-bol/M256-Interactivo/refs/heads/main/render256");
-  const [imageError, setImageError] = useState(false);
-  const fileInputRef = useRef(null);
+        // --- Iconos SVG puros (Reemplazan a 'lucide-react' para evitar dependencias extrañas en Vercel) ---
+        const IconBuilding = ({ size=24, className="" }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>;
+        const IconBookOpen = ({ size=24, className="" }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
+        const IconUsers = ({ size=24, className="" }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+        const IconMonitor = ({ size=24, className="" }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>;
+        const IconCoffee = ({ size=24, className="" }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>;
+        const IconMicroscope = ({ size=24, className="" }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>;
+        const IconInfo = ({ size=24, className="" }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>;
+        const IconUpload = ({ size=24, className="" }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>;
+        const IconImageIcon = ({ size=24, className="" }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>;
 
-  // Maneja la subida de una imagen local SOLO en caso de que la ruta por defecto falle
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const newUrl = URL.createObjectURL(file);
-      setImageUrl(newUrl);
-      setImageError(false);
-    }
-  };
+        // --- Definición de los pisos ---
+        const buildingData = [
+          { 
+            id: 'P5', label: 'P5', name: 'Piso 5', path: "M 12.5,13 L 87.5,13 L 89,22.5 L 11,22.5 Z", infoTop: '17%',
+            icon: IconBuilding, areas: ['Decanato', 'Dirección de Carrera', 'Sala de Reuniones Administrativas'] 
+          },
+          { 
+            id: 'P4', label: 'P4', name: 'Piso 4', path: "M 11,23 L 89,23 L 90.5,33 L 9.5,33 Z", infoTop: '30%',
+            icon: IconBookOpen, areas: ['Aulas de Posgrado (4A - 4E)', 'Auditorio Menor', 'Coordinación de Maestrías'] 
+          },
+          { 
+            id: 'P3', label: 'P3', name: 'Piso 3', path: "M 9.5,33.5 L 90.5,33.5 L 91.5,41 L 95.5,41 L 96.5,46 L 92.5,46 L 92.5,48.5 L 7.5,48.5 L 7.5,46 L 3.5,46 L 4.5,41 L 8.5,41 Z", infoTop: '43%',
+            icon: IconMicroscope, areas: ['Aulas de Posgrado (3A - 3E)', 'Laboratorio de Investigación Económica (3F)', 'Oficinas de Docentes Investigadores', 'Sala de Seminarios 301'] 
+          },
+          { 
+            id: 'P2', label: 'P2', name: 'Piso 2', path: "M 7.5,49 L 92.5,49 L 93.5,54.5 L 98,54.5 L 99,60 L 94.5,60 L 94.5,62.5 L 5.5,62.5 L 5.5,60 L 1,60 L 2,54.5 L 6.5,54.5 Z", infoTop: '57%',
+            icon: IconUsers, areas: ['Aulas de Pregrado (2A - 2F)', 'Biblioteca Especializada FCEAF', 'Salas de Estudio Grupal'] 
+          },
+          { 
+            id: 'P1', label: 'P1', name: 'Piso 1', path: "M 5.5,63 L 94.5,63 L 95.5,68 L 100,68 L 100,74.5 L 96,74.5 L 96,76.5 L 4,76.5 L 4,74.5 L 0,74.5 L 0,68 L 4.5,68 Z", infoTop: '70%',
+            icon: IconMonitor, areas: ['Aulas de Pregrado (1A - 1F)', 'Centro de Cómputo e Informática', 'Soporte Técnico'] 
+          },
+          { 
+            id: 'PB', label: 'PB', name: 'Planta Baja', path: "M 7.5,77 L 40.5,77 L 40.5,88.5 L 7.5,88.5 Z M 40.5,77 L 85,77 L 85,88.5 L 40.5,88.5 Z", infoTop: '85%',
+            icon: IconCoffee, areas: ['Recepción e Informaciones', 'Registro y Admisiones', 'Centro de Estudiantes', 'Cafetería Universitaria'] 
+          },
+        ];
 
-  const handleFloorClick = (id) => {
-    setSelectedFloor(selectedFloor === id ? null : id);
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 md:p-8 font-sans">
-      
-      <div className="w-full max-w-6xl flex flex-col items-center">
-        
-        {/* Cabecera */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">
-            PLANO 3D INTERACTIVO - MÓDULO FCEAF
-          </h1>
-          <p className="text-slate-500 mt-2">
-            Selecciona un piso en el panel lateral o haz clic directamente en el edificio para ver sus áreas.
-          </p>
-        </div>
-
-        {/* Contenedor Principal Interactivo */}
-        <div className="relative w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
+        function InteractiveBuildingPlan() {
+          const [selectedFloor, setSelectedFloor] = useState(null);
+          const [hoveredFloor, setHoveredFloor] = useState(null);
           
-          {/* Si la imagen falla en cargar, mostramos este panel de subida como respaldo */}
-          {imageError ? (
-            <div className="w-full aspect-video md:aspect-[4/3] bg-slate-50 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl m-4 p-8 text-center">
-              <ImageIcon className="w-16 h-16 text-slate-400 mb-4" />
-              <h3 className="text-lg font-semibold text-slate-700">No se pudo cargar la imagen automáticamente</h3>
-              <p className="text-slate-500 max-w-md mt-2 mb-6">
-                El navegador no pudo cargar la imagen desde el repositorio de GitHub. Por favor, cárgala manualmente usando el botón de abajo.
-              </p>
-              <button 
-                onClick={() => fileInputRef.current.click()}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-              >
-                <Upload className="w-5 h-5" />
-                Subir Imagen del Edificio
-              </button>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
-            </div>
-          ) : (
-            <div className="relative w-full h-auto">
-              
-              {/* Imagen Base del Edificio */}
-              <img 
-                src={imageUrl} 
-                alt="Módulo FCEAF" 
-                className="w-full h-auto block select-none"
-                onError={() => setImageError(true)}
-              />
+          const [imageUrl, setImageUrl] = useState("https://raw.githubusercontent.com/turjan-bol/M256-Interactivo/refs/heads/main/render256");
+          const [imageError, setImageError] = useState(false);
+          const fileInputRef = useRef(null);
 
-              {/* Botones Laterales de Navegación (Estilo Elevador) */}
-              <div className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30 bg-white/80 backdrop-blur-md p-2 md:p-3 rounded-xl shadow-lg border border-white/50">
-                {buildingData.map((floor) => (
-                  <button
-                    key={`btn-${floor.id}`}
-                    onClick={() => handleFloorClick(floor.id)}
-                    onMouseEnter={() => setHoveredFloor(floor.id)}
-                    onMouseLeave={() => setHoveredFloor(null)}
-                    className={`w-10 h-10 md:w-14 md:h-14 rounded-lg flex items-center justify-center text-sm md:text-lg font-bold transition-all duration-300 shadow-sm
-                      ${selectedFloor === floor.id 
-                        ? 'bg-cyan-500 text-white shadow-cyan-500/50 scale-110' 
-                        : hoveredFloor === floor.id
-                          ? 'bg-cyan-100 text-cyan-800'
-                          : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
-                      }`}
-                  >
-                    {floor.label}
-                  </button>
-                ))}
-              </div>
+          const handleImageUpload = (event) => {
+            const file = event.target.files[0];
+            if (file) {
+              const newUrl = URL.createObjectURL(file);
+              setImageUrl(newUrl);
+              setImageError(false);
+            }
+          };
 
-              {/* Capas Interactivas sobre el Edificio (SVG Hitboxes para perspectiva) */}
-              <svg 
-                className="absolute top-0 left-0 w-full h-full z-20" 
-                viewBox="0 0 100 100" 
-                preserveAspectRatio="none"
-                style={{ pointerEvents: 'none' }}
-              >
-                <defs>
-                  <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="0.6" result="blur" />
-                    <feMerge>
-                      <feMergeNode in="blur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
+          const handleFloorClick = (id) => {
+            setSelectedFloor(selectedFloor === id ? null : id);
+          };
 
-                {buildingData.map((floor) => {
-                  const isActive = selectedFloor === floor.id;
-                  const isHovered = hoveredFloor === floor.id;
-
-                  return (
-                    <path
-                      key={`poly-${floor.id}`}
-                      d={floor.path}
-                      className="cursor-pointer transition-all duration-300 outline-none"
-                      fill={isActive ? 'rgba(34, 211, 238, 0.35)' : isHovered ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0,0,0,0)'}
-                      stroke={isActive ? '#22d3ee' : isHovered ? 'rgba(255,255,255,0.8)' : 'transparent'}
-                      strokeWidth={isActive ? "0.4" : isHovered ? "0.2" : "0"}
-                      filter={isActive ? "url(#neon-glow)" : ""}
-                      onClick={() => handleFloorClick(floor.id)}
-                      onMouseEnter={() => setHoveredFloor(floor.id)}
-                      onMouseLeave={() => setHoveredFloor(null)}
-                      style={{ pointerEvents: 'all' }}
-                    />
-                  );
-                })}
-              </svg>
-
-              {/* Panel de Detalles (Menú desplegable de información) */}
-              {buildingData.map((floor) => {
-                const isActive = selectedFloor === floor.id;
-                if (!isActive) return null;
+          return (
+            <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 md:p-8 font-sans">
+              <div className="w-full max-w-6xl flex flex-col items-center">
                 
-                const Icon = floor.icon;
+                {/* Cabecera */}
+                <div className="text-center mb-6">
+                  <h1 className="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">
+                    PLANO 3D INTERACTIVO - MÓDULO FCEAF
+                  </h1>
+                  <p className="text-slate-500 mt-2">
+                    Selecciona un piso en el panel lateral o haz clic directamente en el edificio para ver sus áreas.
+                  </p>
+                </div>
 
-                return (
-                  <div 
-                    key={`info-${floor.id}`}
-                    className="absolute right-4 md:right-12 z-40 bg-white/95 backdrop-blur-xl p-0 rounded-xl shadow-2xl border border-slate-200 w-64 md:w-80 transition-all duration-300 animate-in fade-in slide-in-from-right-8"
-                    // Posicionamos el panel verticalmente basado en la propiedad infoTop
-                    style={{ 
-                      top: floor.infoTop, 
-                      transform: 'translateY(-50%)' 
-                    }}
-                  >
-                    {/* Triángulo/Flecha apuntando al edificio */}
-                    <div className="hidden md:block absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-100 rotate-45 border-l border-b border-slate-200" />
-                    
-                    <div className="bg-slate-100 p-4 rounded-t-xl border-b border-slate-200 flex items-center gap-3 relative z-10">
-                      <div className="bg-cyan-100 p-2 rounded-lg text-cyan-600">
-                        <Icon size={20} />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-slate-800 text-lg leading-tight">{floor.name}</h3>
-                        <p className="text-xs text-slate-500 font-medium tracking-wider">DETALLES DEL NIVEL</p>
-                      </div>
-                    </div>
-                    
-                    <div className="p-4 relative z-10">
-                      <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                        <Info size={16} className="text-cyan-500" />
-                        Áreas principales:
+                {/* Contenedor Principal Interactivo */}
+                <div className="relative w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
+                  
+                  {/* Panel de subida como respaldo si falla la imagen de GitHub */}
+                  {imageError ? (
+                    <div className="w-full aspect-video md:aspect-[4/3] bg-slate-50 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl m-4 p-8 text-center">
+                      <IconImageIcon className="w-16 h-16 text-slate-400 mb-4" />
+                      <h3 className="text-lg font-semibold text-slate-700">No se pudo cargar la imagen automáticamente</h3>
+                      <p className="text-slate-500 max-w-md mt-2 mb-6">
+                        El navegador no pudo cargar la imagen desde el repositorio de GitHub. Por favor, cárgala manualmente usando el botón de abajo.
                       </p>
-                      <ul className="space-y-3">
-                        {floor.areas.map((area, index) => (
-                          <li key={index} className="flex items-start gap-2 text-sm text-slate-600">
-                            <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0" />
-                            <span>{area}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      <button 
+                        onClick={() => fileInputRef.current.click()}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                      >
+                        <IconUpload className="w-5 h-5" />
+                        Subir Imagen del Edificio
+                      </button>
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                      />
                     </div>
-                  </div>
-                );
-              })}
+                  ) : (
+                    <div className="relative w-full h-auto">
+                      
+                      {/* Imagen Base del Edificio */}
+                      <img 
+                        src={imageUrl} 
+                        alt="Módulo FCEAF" 
+                        className="w-full h-auto block select-none"
+                        onError={() => setImageError(true)}
+                      />
 
+                      {/* Botones Laterales de Navegación */}
+                      <div className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30 bg-white/80 backdrop-blur-md p-2 md:p-3 rounded-xl shadow-lg border border-white/50">
+                        {buildingData.map((floor) => (
+                          <button
+                            key={`btn-${floor.id}`}
+                            onClick={() => handleFloorClick(floor.id)}
+                            onMouseEnter={() => setHoveredFloor(floor.id)}
+                            onMouseLeave={() => setHoveredFloor(null)}
+                            className={`w-10 h-10 md:w-14 md:h-14 rounded-lg flex items-center justify-center text-sm md:text-lg font-bold transition-all duration-300 shadow-sm
+                              ${selectedFloor === floor.id 
+                                ? 'bg-cyan-500 text-white shadow-cyan-500/50 scale-110' 
+                                : hoveredFloor === floor.id
+                                  ? 'bg-cyan-100 text-cyan-800'
+                                  : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+                              }`}
+                          >
+                            {floor.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Capas Interactivas sobre el Edificio */}
+                      <svg 
+                        className="absolute top-0 left-0 w-full h-full z-20" 
+                        viewBox="0 0 100 100" 
+                        preserveAspectRatio="none"
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        <defs>
+                          <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="0.6" result="blur" />
+                            <feMerge>
+                              <feMergeNode in="blur" />
+                              <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                          </filter>
+                        </defs>
+
+                        {buildingData.map((floor) => {
+                          const isActive = selectedFloor === floor.id;
+                          const isHovered = hoveredFloor === floor.id;
+
+                          return (
+                            <path
+                              key={`poly-${floor.id}`}
+                              d={floor.path}
+                              className="cursor-pointer transition-all duration-300 outline-none"
+                              fill={isActive ? 'rgba(34, 211, 238, 0.35)' : isHovered ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0,0,0,0)'}
+                              stroke={isActive ? '#22d3ee' : isHovered ? 'rgba(255,255,255,0.8)' : 'transparent'}
+                              strokeWidth={isActive ? "0.4" : isHovered ? "0.2" : "0"}
+                              filter={isActive ? "url(#neon-glow)" : ""}
+                              onClick={() => handleFloorClick(floor.id)}
+                              onMouseEnter={() => setHoveredFloor(floor.id)}
+                              onMouseLeave={() => setHoveredFloor(null)}
+                              style={{ pointerEvents: 'all' }}
+                            />
+                          );
+                        })}
+                      </svg>
+
+                      {/* Panel de Detalles */}
+                      {buildingData.map((floor) => {
+                        const isActive = selectedFloor === floor.id;
+                        if (!isActive) return null;
+                        
+                        const Icon = floor.icon;
+
+                        return (
+                          <div 
+                            key={`info-${floor.id}`}
+                            className="absolute right-4 md:right-12 z-40 bg-white/95 backdrop-blur-xl p-0 rounded-xl shadow-2xl border border-slate-200 w-64 md:w-80 transition-all duration-300 animate-in fade-in slide-in-from-right-8"
+                            style={{ 
+                              top: floor.infoTop, 
+                              transform: 'translateY(-50%)' 
+                            }}
+                          >
+                            <div className="hidden md:block absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-100 rotate-45 border-l border-b border-slate-200" />
+                            
+                            <div className="bg-slate-100 p-4 rounded-t-xl border-b border-slate-200 flex items-center gap-3 relative z-10">
+                              <div className="bg-cyan-100 p-2 rounded-lg text-cyan-600">
+                                <Icon size={20} />
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-slate-800 text-lg leading-tight">{floor.name}</h3>
+                                <p className="text-xs text-slate-500 font-medium tracking-wider">DETALLES DEL NIVEL</p>
+                              </div>
+                            </div>
+                            
+                            <div className="p-4 relative z-10">
+                              <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                                <IconInfo size={16} className="text-cyan-500" />
+                                Áreas principales:
+                              </p>
+                              <ul className="space-y-3">
+                                {floor.areas.map((area, index) => (
+                                  <li key={index} className="flex items-start gap-2 text-sm text-slate-600">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0" />
+                                    <span>{area}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mt-4 text-slate-400 text-sm flex gap-4">
+                  <p>• Los pisos están mapeados en las secciones horizontales de la fachada.</p>
+                </div>
+
+              </div>
             </div>
-          )}
-        </div>
-        
-        {/* Instrucción inferior */}
-        <div className="mt-4 text-slate-400 text-sm flex gap-4">
-          <p>• Los pisos están mapeados en las secciones horizontales de la fachada.</p>
-        </div>
+          );
+        }
 
-      </div>
-    </div>
-  );
-}
+        // Renderizar en el DOM
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<InteractiveBuildingPlan />);
+    </script>
+</body>
+</html>
